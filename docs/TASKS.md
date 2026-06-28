@@ -86,7 +86,7 @@ Phase 2: Markdown editor MVP
 
 \* \[ ] File transfer
 
-\* \[ ] Vercel deployment
+\* \[x] Vercel deployment
 
 \* \[ ] Cloudflare Tunnel setup
 
