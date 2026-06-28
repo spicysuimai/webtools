@@ -70,6 +70,7 @@ Phase 2: Markdown editor MVP
 \* \[x] Homepage public-only filter — 首页只展示公开可用工具，过滤 requireAuth 项
 \* \[x] Footer — 站点底部组件，居中版权信息，风格对齐 Navbar
 \* \[x] 404 page — 自定义 404 页面，居中提示，返回首页链接
+\* \[x] html lang — 修正为 zh-CN
 
 \* \[ ] JWT login
 
