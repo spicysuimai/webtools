@@ -16,8 +16,24 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.spicysuimai.cn"),
-  title: "SpicySuiMai Tools",
+  title: {
+    default: "SpicySuiMai Tools",
+    template: "%s | SpicySuiMai Tools",
+  },
   description: "一个自建的个人工具站",
+  openGraph: {
+    title: "SpicySuiMai Tools",
+    description: "一个自建的个人工具站",
+    url: "/",
+    siteName: "SpicySuiMai Tools",
+    locale: "zh_CN",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SpicySuiMai Tools",
+    description: "一个自建的个人工具站",
+  },
 };
 
 export default function RootLayout({
