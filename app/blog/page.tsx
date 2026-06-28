@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getAllPosts } from "@/lib/blog";
+
+export const metadata: Metadata = {
+  title: "博客",
+  description: "基于 Markdown 文件的个人博客，文章存放在 content/blog。",
+};
 
 export default function BlogPage() {
   const posts = getAllPosts();

@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { ToolCard } from "@/components/tool-card";
 import { tools } from "@/tools/registry";
+
+export const metadata: Metadata = {
+  title: "工具",
+  description: "自建工具集，所有工具均为独立模块。",
+};
 
 export default function ToolsPage() {
   return (

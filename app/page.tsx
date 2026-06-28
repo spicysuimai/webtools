@@ -1,7 +1,12 @@
+import type { Metadata } from "next";
 import { ToolCard } from "@/components/tool-card";
 import { tools } from "@/tools/registry";
 
 const publicTools = tools.filter((t) => !t.requireAuth);
+
+export const metadata: Metadata = {
+  description: "一个自建的个人工具站，包含博客、Markdown 编辑器、图片压缩、数学公式等工具。",
+};
 
 export default function Home() {
   return (
