@@ -41,7 +41,7 @@ Phase 3: 公开站点优化
 ## Phase 3: 公开站点优化
 
 * [x] SEO 基础 — robots.ts / sitemap.xml / metadataBase
-* [ ] 社交分享：OG / Twitter metadata
+* [x] 社交分享：OG / Twitter metadata
 * [ ] Favicon / site icons
 * [ ] 清理 public/ 样板文件
 
