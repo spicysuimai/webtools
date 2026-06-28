@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://www.spicysuimai.cn"),
   title: "SpicySuiMai Tools",
   description: "一个自建的个人工具站",
 };
