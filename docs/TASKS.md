@@ -67,6 +67,7 @@ Phase 2: Markdown editor MVP
 \* \[x] Image compressor — 纯浏览器端单图压缩，Canvas API，lint/build 已通过
 
 \* \[x] Math formula converter — 纯浏览器端 LaTeX 公式渲染，KaTeX，lint/build 已通过
+\* \[x] Homepage public-only filter — 首页只展示公开可用工具，过滤 requireAuth 项
 
 \* \[ ] JWT login
 
