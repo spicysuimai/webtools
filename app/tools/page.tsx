@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   description: "自建工具集，所有工具均为独立模块。",
 };
 
+const publicTools = tools.filter((t) => !t.requireAuth);
+
 export default function ToolsPage() {
   return (
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-16">
@@ -15,7 +17,7 @@ export default function ToolsPage() {
         自建工具集，所有工具均为独立模块。
       </p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2">
-        {tools.map((tool) => (
+        {publicTools.map((tool) => (
           <ToolCard key={tool.id} {...tool} />
         ))}
       </div>
