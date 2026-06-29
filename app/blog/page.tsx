@@ -4,7 +4,7 @@ import { getAllPosts } from "@/lib/blog";
 
 export const metadata: Metadata = {
   title: "博客",
-  description: "基于 Markdown 文件的个人博客，文章存放在 content/blog。",
+  description: "基于 Markdown 文件的个人博客，记录技术与生活。",
 };
 
 export default function BlogPage() {
@@ -14,11 +14,7 @@ export default function BlogPage() {
     <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-16">
       <h1 className="text-3xl font-bold tracking-tight">博客</h1>
       <p className="mt-4 max-w-lg leading-relaxed text-zinc-600 dark:text-zinc-400">
-        基于 Markdown 文件的个人博客，文章存放在{" "}
-        <code className="rounded bg-zinc-100 px-1 text-sm dark:bg-zinc-800">
-          content/blog
-        </code>
-        。
+        基于 Markdown 文件的个人博客，记录技术与生活。
       </p>
 
       {posts.length === 0 ? (
