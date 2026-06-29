@@ -5,6 +5,7 @@ import { tools } from "@/tools/registry";
 
 const PROTECTED = [
   "/dashboard",
+  "/api/private",
   ...tools.filter((t) => t.requireAuth).map((t) => t.href),
 ];
 
@@ -18,6 +19,9 @@ export async function middleware(request: NextRequest) {
   const payload = token ? await verifyToken(token) : null;
 
   if (!payload) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "未登录" }, { status: 401 });
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
