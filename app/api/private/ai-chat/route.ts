@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { verifyToken, COOKIE_NAME } from "@/lib/auth";
-import { validateRequest, createAdapter } from "@/lib/ai/providers/registry";
+import {
+  validateRequest,
+  createAdapter,
+  getAvailableProviders,
+} from "@/lib/ai/providers/registry";
 
 const MAX_BODY_BYTES = 100_000;
 const MAX_MESSAGES = 50;
@@ -101,4 +105,14 @@ export async function POST(request: Request) {
       { status: 502 },
     );
   }
+}
+
+export async function GET(request: Request) {
+  const token = await getAuthCookie(request);
+  if (!token || !(await verifyToken(token))) {
+    return NextResponse.json({ error: "未登录" }, { status: 401 });
+  }
+
+  const providers = getAvailableProviders();
+  return NextResponse.json({ providers });
 }
