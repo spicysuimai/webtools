@@ -17,7 +17,7 @@ export default function Home() {
       </p>
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {publicTools.map((tool) => (
-          <ToolCard key={tool.id} title={tool.title} description={tool.description} href={tool.href} />
+          <ToolCard key={tool.id} {...tool} />
         ))}
       </div>
     </main>
