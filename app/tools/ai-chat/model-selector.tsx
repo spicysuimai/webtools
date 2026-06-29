@@ -26,9 +26,21 @@ export function ModelSelector({
   useEffect(() => {
     fetch("/api/private/ai-chat")
       .then((r) => r.json())
-      .then((d) => setProviders(d.providers ?? []))
+      .then((d) => {
+        const list: Provider[] = d.providers ?? [];
+        setProviders(list);
+        if (list.length === 0) return;
+        const exists = list.find((p) => p.id === provider);
+        if (!exists) {
+          const first = list[0];
+          onProviderChange(first.id);
+          onModelChange(first.models[0] ?? "");
+        } else if (!exists.models.includes(model)) {
+          onModelChange(exists.models[0] ?? "");
+        }
+      })
       .catch(() => {});
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const current = providers.find((p) => p.id === provider);
   const models = current?.models ?? [];

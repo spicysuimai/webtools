@@ -7,8 +7,8 @@ import { MessageInput } from "./message-input";
 import { useChat } from "./use-chat";
 
 export default function AiChatPage() {
-  const [provider, setProvider] = useState("openai");
-  const [model, setModel] = useState("gpt-4o");
+  const [provider, setProvider] = useState("");
+  const [model, setModel] = useState("");
   const { messages, loading, error, sendMessage } = useChat();
 
   const handleSend = useCallback(
@@ -33,7 +33,13 @@ export default function AiChatPage() {
       <div className="mt-6 flex flex-1 flex-col">
         <ChatPanel messages={messages} loading={loading} />
         <div className="mt-4">
-          <MessageInput disabled={loading} onSend={handleSend} />
+          {!provider ? (
+            <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+              未检测到可用 AI 服务，请先配置 API key 环境变量
+            </p>
+          ) : (
+            <MessageInput disabled={loading || !model} onSend={handleSend} />
+          )}
         </div>
       </div>
     </main>
