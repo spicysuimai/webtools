@@ -1,5 +1,6 @@
 import type { IProviderAdapter } from "./base";
 import { OpenAICompatibleAdapter } from "./openai-compatible";
+import { AnthropicAdapter } from "./anthropic";
 
 export interface ProviderConfig {
   label: string;
@@ -93,6 +94,8 @@ export function createAdapter(provider: string): IProviderAdapter {
     }
     return new OpenAICompatibleAdapter(provider, key, baseUrl);
   }
+
+  if (provider === "anthropic") return new AnthropicAdapter(key);
 
   throw new Error(`Adapter for ${provider} not yet implemented`);
 }
