@@ -3,9 +3,10 @@ import type { NextRequest } from "next/server";
 import { verifyToken, COOKIE_NAME } from "@/lib/auth";
 import { tools } from "@/tools/registry";
 
-const PROTECTED = tools
-  .filter((t) => t.requireAuth)
-  .map((t) => t.href);
+const PROTECTED = [
+  "/dashboard",
+  ...tools.filter((t) => t.requireAuth).map((t) => t.href),
+];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
