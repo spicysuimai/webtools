@@ -74,13 +74,46 @@ Phase 5: 私有工具
 
 上线前需设置 Vercel 环境变量：JWT_SECRET、AUTH_PASSWORD_HASH
 
+### Phase 5.3: AI Chat MVP
+
+已完成。
+
+Provider 适配层：
+
+* [x] lib/ai/types.ts — ChatMessage / ChatRequest / ChatResponse 统一格式
+* [x] lib/ai/providers/base.ts — IProviderAdapter 接口
+* [x] lib/ai/providers/registry.ts — Provider + Model 双层白名单 + 工厂
+* [x] lib/ai/providers/openai-compatible.ts — OpenAI / DeepSeek / OpenRouter / Custom 通用适配器
+* [x] lib/ai/providers/anthropic.ts — Anthropic Messages API 原生适配器
+* [x] lib/ai/providers/gemini.ts — Google Gemini generateContent 原生适配器
+
+API 层：
+
+* [x] app/api/private/ai-chat/route.ts — POST chat（认证 + 校验 + 路由）、GET providers
+* [x] middleware.ts — /api/private 加入保护前缀，API 请求返回 401 JSON
+
+UI 层：
+
+* [x] app/tools/ai-chat/page.tsx — 聊天主页面（多 provider/model 联动）
+* [x] app/tools/ai-chat/model-selector.tsx — Provider + Model 下拉，初始化自动选中可用项
+* [x] app/tools/ai-chat/chat-panel.tsx — 消息列表，Markdown + LaTeX 渲染
+* [x] app/tools/ai-chat/message-input.tsx — 输入框（Enter 发送）
+* [x] app/tools/ai-chat/use-chat.ts — 客户端状态管理
+
+Bugfix：
+
+* [x] Provider 选择与默认值同步（消除"选 DeepSeek 但发 openai"问题）
+* [x] Assistant 消息 Markdown 渲染（react-markdown + remark-gfm + remark-math + rehype-katex）
+
+上线前需设置对应 provider 的 API key 环境变量（如 DEEPSEEK_API_KEY）。无 key 的 provider 前端不展示。
+
 ## Later (暂缓)
 
 * [x] JWT login
 * [ ] Turso setup
 * [ ] Travel records
 * [ ] Food diary
-* [ ] AI chat
+* [x] AI chat (multi-provider, non-streaming)
 * [ ] Local terminal service
 * [ ] File transfer
 * [ ] Cloudflare Tunnel setup
