@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "自建工具集，所有工具均为独立模块。",
 };
 
-const publicTools = tools.filter((t) => !t.requireAuth);
+const publicTools = tools.filter((t) => !t.requireAuth && t.id !== "blog");
 
 export default function ToolsPage() {
   return (
