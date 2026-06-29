@@ -45,6 +45,17 @@ Phase 3: 公开站点优化
 * [x] Favicon / site icons
 * [x] 清理 public/ 样板文件
 
+## Phase 4: 公开站点内容与体验优化
+
+* [x] Navbar 当前页高亮 + aria-current
+* [x] 工具列表页过滤私有工具
+* [x] 博客详情加返回链接
+* [x] Footer 加导航链接
+* [x] 博客列表页术语改写
+* [x] 首页文案与 SEO 描述区分
+* [x] ToolCard 加 emoji 图标
+* [x] 工具列表页过滤博客入口
+
 ## Later (暂缓)
 
 * [ ] JWT login
