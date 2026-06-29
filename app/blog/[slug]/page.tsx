@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAllPosts, getPostBySlug } from "@/lib/blog";
 
@@ -37,7 +38,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-16">
+    <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-6 py-8">
+      <Link
+        href="/blog"
+        className="mb-6 text-sm text-zinc-500 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+      >
+        &larr; 返回博客
+      </Link>
       <article>
         <header>
           <h1 className="text-3xl font-bold tracking-tight">{post.title}</h1>
