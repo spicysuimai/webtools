@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,6 +13,14 @@ const links = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const [authed, setAuthed] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setAuthed(d.authed))
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="border-b border-zinc-200 dark:border-zinc-800">
@@ -40,6 +49,20 @@ export function Navbar() {
               </li>
             );
           })}
+          {authed && (
+            <li>
+              <Link
+                href="/dashboard"
+                className={
+                  pathname === "/dashboard"
+                    ? "font-medium text-zinc-900 dark:text-zinc-100"
+                    : "text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                }
+              >
+                控制台
+              </Link>
+            </li>
+          )}
         </ul>
       </nav>
     </header>
