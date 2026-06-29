@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 3: 公开站点优化
+Phase 5: 私有工具
 
 ## Phase 2: 基础功能 & 部署
 
@@ -56,9 +56,27 @@ Phase 3: 公开站点优化
 * [x] ToolCard 加 emoji 图标
 * [x] 工具列表页过滤博客入口
 
+## Phase 5: 私有工具
+
+### Phase 5.1: 认证基础设施
+
+已完成。
+
+* [x] jose JWT 库安装
+* [x] lib/auth.ts — JWT sign/verify + 密码 SHA-256 验证
+* [x] app/api/auth/login/route.ts
+* [x] app/api/auth/logout/route.ts
+* [x] app/api/auth/me/route.ts
+* [x] middleware.ts — 私有路由拦截
+* [x] app/login/page.tsx
+* [x] Navbar 已登录显示"控制台"入口
+* [x] app/dashboard/page.tsx — 私有工具列表
+
+上线前需设置 Vercel 环境变量：JWT_SECRET、AUTH_PASSWORD_HASH
+
 ## Later (暂缓)
 
-* [ ] JWT login
+* [x] JWT login
 * [ ] Turso setup
 * [ ] Travel records
 * [ ] Food diary
