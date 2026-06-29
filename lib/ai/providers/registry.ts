@@ -1,4 +1,5 @@
 import type { IProviderAdapter } from "./base";
+import { OpenAICompatibleAdapter } from "./openai-compatible";
 
 export interface ProviderConfig {
   label: string;
@@ -72,7 +73,26 @@ export function getProviderLabel(provider: string): string {
   return PROVIDERS[provider]?.label ?? provider;
 }
 
+const OPENAI_COMPATIBLE = new Set([
+  "openai",
+  "deepseek",
+  "openrouter",
+  "custom",
+]);
+
 export function createAdapter(provider: string): IProviderAdapter {
-  // adapters will be wired in follow-up commits
+  const key = getApiKey(provider);
+
+  if (OPENAI_COMPATIBLE.has(provider)) {
+    const baseUrl =
+      provider === "custom"
+        ? process.env.CUSTOM_OPENAI_BASE_URL
+        : undefined;
+    if (provider === "custom" && !baseUrl) {
+      throw new Error("CUSTOM_OPENAI_BASE_URL 未配置");
+    }
+    return new OpenAICompatibleAdapter(provider, key, baseUrl);
+  }
+
   throw new Error(`Adapter for ${provider} not yet implemented`);
 }
