@@ -213,6 +213,8 @@ Bugfix：
 * [x] Agent: EADDRINUSE 友好错误提示，不抛 unhandled error
 * [x] Agent heartbeat 401: middleware 支持 Bearer token，agent 心跳带 `sub: "agent"` JWT
 * [x] Terminal 连接即断: React Strict Mode mount counter 防 WS 重复创建/销毁
+* [x] Tab 切换清空输出: display:none → visibility:hidden + absolute 定位保留 xterm 状态
+* [x] 退出终端按钮: 确认弹窗 → 关闭所有 session → 返回连接表单
 
 ## Decisions
 
