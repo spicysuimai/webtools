@@ -148,7 +148,21 @@ Bugfix：
 * [x] app/tools/terminal/page.tsx — 多 tab 栏，新建表单，关闭 tab → kill PTY
 * [x] components/terminal-view.tsx — onReady(label) 回调设置 tab 名称
 
-* [ ] Phase 6.4: Auth Upgrade（WS ticket + Origin allowlist + 限流 + audit）
+### Phase 6.4: Auth Upgrade
+
+已完成。
+
+* [x] agent/package.json — 添加 jose 依赖
+* [x] agent/src/auth.ts — verifyTicket (jose JWT), verifyKey (fallback), checkOrigin, checkRateLimit
+* [x] agent/src/config.ts — JWT_SECRET, AGENT_ORIGIN_ALLOWLIST, AGENT_MAX_CONNS_PER_MIN
+* [x] agent/src/index.ts — Origin 硬拦截, rate limit, [audit] 日志, ticket 优先于 key
+* [x] lib/auth.ts — signTerminalTicket (sub=terminal, 60s TTL)
+* [x] app/api/private/terminal-ticket/route.ts — POST 发放 WS ticket
+* [x] app/tools/terminal/page.tsx — 连接前获取 ticket，移除 auth key 输入
+* [x] components/terminal-view.tsx — ticket prop 替代 authKey
+* [x] agent/.env.example — 文档更新
+
+* [ ] Phase 6.5: Device Registry（多设备注册、在线状态、切换）
 
 ## Later (暂缓)
 
