@@ -18,8 +18,9 @@ export async function register(): Promise<void> {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: cfg.deviceName,
-          host: cfg.host === "0.0.0.0" ? getLocalIP() : cfg.host,
+          host: cfg.publicUrl ? cfg.host : (cfg.host === "0.0.0.0" ? getLocalIP() : cfg.host),
           port: cfg.port,
+          publicUrl: cfg.publicUrl || undefined,
         }),
       });
       if (res.ok) {

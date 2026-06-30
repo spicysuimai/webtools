@@ -19,6 +19,7 @@ export interface AgentConfig {
   maxConnsPerMin: number;
   deviceName: string;
   registryUrl: string;
+  publicUrl: string;
 }
 
 let cached: AgentConfig | null = null;
@@ -59,6 +60,7 @@ export function config(): AgentConfig {
 
   const deviceName = process.env.AGENT_DEVICE_NAME || "";
   const registryUrl = process.env.AGENT_REGISTRY_URL || "";
+  const publicUrl = process.env.AGENT_PUBLIC_URL || "";
 
   cached = {
     host,
@@ -72,6 +74,7 @@ export function config(): AgentConfig {
     maxConnsPerMin,
     deviceName,
     registryUrl,
+    publicUrl,
   };
   return cached;
 }

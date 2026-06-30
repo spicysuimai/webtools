@@ -6,10 +6,10 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { name, host, port } = await req.json();
+  const { name, host, port, publicUrl } = await req.json();
   if (!name || !host || !port) {
     return NextResponse.json({ error: "name, host, port required" }, { status: 400 });
   }
-  registerDevice(name, host, port);
+  registerDevice(name, host, port, publicUrl || undefined);
   return NextResponse.json({ ok: true });
 }

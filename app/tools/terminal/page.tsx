@@ -8,6 +8,7 @@ interface Device {
   name: string;
   host: string;
   port: number;
+  publicUrl: string;
   online: boolean;
   lastSeen: number;
 }
@@ -62,7 +63,10 @@ export default function TerminalPage() {
   const getWsUrl = (): string => {
     if (selectedDevice) {
       const dev = devices.find((d) => d.name === selectedDevice);
-      if (dev) return `ws://${dev.host}:${dev.port}`;
+      if (dev) {
+        if (dev.publicUrl) return dev.publicUrl;
+        return `ws://${dev.host}:${dev.port}`;
+      }
     }
     return getTerminalWsUrl();
   };
@@ -113,7 +117,7 @@ export default function TerminalPage() {
               <option value="">默认 (localhost:4200)</option>
               {devices.map((d) => (
                 <option key={d.name} value={d.name}>
-                  {d.name} ({d.host}:{d.port}) {d.online ? "●" : "○"}
+                  {d.name} ({d.publicUrl || `${d.host}:${d.port}`}) {d.online ? "●" : "○"}
                 </option>
               ))}
             </select>
@@ -213,7 +217,7 @@ export default function TerminalPage() {
             <option value="">默认</option>
             {devices.map((d) => (
               <option key={d.name} value={d.name}>
-                {d.name} {d.online ? "" : "(离线)"}
+                {d.name}{d.publicUrl ? " (CF)" : ""}{d.online ? "" : " (离线)"}
               </option>
             ))}
           </select>
