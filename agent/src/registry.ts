@@ -1,6 +1,20 @@
+import { SignJWT } from "jose";
 import { config } from "./config.js";
 
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+
+function getSecret(): Uint8Array {
+  const cfg = config();
+  return new TextEncoder().encode(cfg.jwtSecret);
+}
+
+async function signAgentToken(): Promise<string> {
+  return new SignJWT({ sub: "agent" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("30s")
+    .sign(getSecret());
+}
 
 export async function register(): Promise<void> {
   const cfg = config();
@@ -13,9 +27,13 @@ export async function register(): Promise<void> {
 
   const doHeartbeat = async () => {
     try {
+      const token = await signAgentToken();
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           name: cfg.deviceName,
           host: cfg.publicUrl ? cfg.host : (cfg.host === "0.0.0.0" ? getLocalIP() : cfg.host),

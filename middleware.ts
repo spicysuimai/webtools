@@ -15,7 +15,13 @@ export async function middleware(request: NextRequest) {
   const needsAuth = PROTECTED.some((href) => pathname.startsWith(href));
   if (!needsAuth) return NextResponse.next();
 
-  const token = request.cookies.get(COOKIE_NAME)?.value;
+  let token = request.cookies.get(COOKIE_NAME)?.value;
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader?.startsWith("Bearer ")) {
+      token = authHeader.slice(7);
+    }
+  }
   const payload = token ? await verifyToken(token) : null;
 
   if (!payload) {
