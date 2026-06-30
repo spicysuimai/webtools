@@ -1,14 +1,23 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { TerminalView } from "@/components/terminal-view";
 import { getTerminalWsUrl } from "@/lib/ws-config";
+
+interface Device {
+  name: string;
+  host: string;
+  port: number;
+  online: boolean;
+  lastSeen: number;
+}
 
 interface SessionTab {
   id: string;
   label: string;
   cwd: string;
   ticket: string;
+  wsUrl: string;
 }
 
 export default function TerminalPage() {
@@ -17,6 +26,15 @@ export default function TerminalPage() {
   const [activeTabIdx, setActiveTabIdx] = useState(0);
   const [showForm, setShowForm] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [selectedDevice, setSelectedDevice] = useState<string>("");
+
+  useEffect(() => {
+    fetch("/api/private/devices")
+      .then((r) => r.json())
+      .then((d) => setDevices(d.devices || []))
+      .catch(() => {});
+  }, []);
 
   const handleReady = useCallback(
     (idx: number) => (label: string) => {
@@ -41,6 +59,14 @@ export default function TerminalPage() {
     [],
   );
 
+  const getWsUrl = (): string => {
+    if (selectedDevice) {
+      const dev = devices.find((d) => d.name === selectedDevice);
+      if (dev) return `ws://${dev.host}:${dev.port}`;
+    }
+    return getTerminalWsUrl();
+  };
+
   const addTab = async () => {
     setLoading(true);
     try {
@@ -53,6 +79,7 @@ export default function TerminalPage() {
         label: cwd ? cwd.split(/[/\\]/).pop() || "shell" : "shell",
         cwd: cwd || "",
         ticket: data.ticket,
+        wsUrl: getWsUrl(),
       };
       setTabs((prev) => [...prev, newTab]);
       setActiveTabIdx(tabs.length);
@@ -73,14 +100,39 @@ export default function TerminalPage() {
         </p>
 
         <div className="mt-8 flex w-full flex-col gap-4">
+          {/* Device selector */}
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Host
+              目标设备
+            </span>
+            <select
+              value={selectedDevice}
+              onChange={(e) => setSelectedDevice(e.target.value)}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="">默认 (localhost:4200)</option>
+              {devices.map((d) => (
+                <option key={d.name} value={d.name}>
+                  {d.name} ({d.host}:{d.port}) {d.online ? "●" : "○"}
+                </option>
+              ))}
+            </select>
+            {devices.length === 0 && (
+              <span className="text-xs text-zinc-400">
+                未检测到已注册设备
+              </span>
+            )}
+          </label>
+
+          {/* WS URL preview */}
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              WebSocket 地址
             </span>
             <input
               type="text"
               readOnly
-              value={typeof window !== "undefined" ? getTerminalWsUrl() : ""}
+              value={getWsUrl()}
               className="rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
             />
           </label>
@@ -153,6 +205,18 @@ export default function TerminalPage() {
       {/* New session form (inline) */}
       {showForm && (
         <div className="flex flex-wrap items-center gap-2 border-b border-zinc-700 px-2 py-2">
+          <select
+            value={selectedDevice}
+            onChange={(e) => setSelectedDevice(e.target.value)}
+            className="rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-200"
+          >
+            <option value="">默认</option>
+            {devices.map((d) => (
+              <option key={d.name} value={d.name}>
+                {d.name} {d.online ? "" : "(离线)"}
+              </option>
+            ))}
+          </select>
           <input
             type="text"
             value={cwd}
@@ -188,6 +252,7 @@ export default function TerminalPage() {
           <TerminalView
             ticket={tab.ticket}
             cwd={tab.cwd || undefined}
+            wsUrl={tab.wsUrl}
             onClose={() => handleKill(i)}
             onReady={handleReady(i)}
           />

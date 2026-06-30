@@ -10,11 +10,12 @@ import { getTerminalWsUrl } from "@/lib/ws-config";
 interface Props {
   ticket: string;
   cwd?: string;
+  wsUrl?: string;
   onClose?: () => void;
   onReady?: (label: string) => void;
 }
 
-export function TerminalView({ ticket, cwd, onClose, onReady }: Props) {
+export function TerminalView({ ticket, cwd, wsUrl, onClose, onReady }: Props) {
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -70,8 +71,8 @@ export function TerminalView({ ticket, cwd, onClose, onReady }: Props) {
     term.open(containerRef.current!);
     fitAddon.fit();
 
-    const wsUrl = getTerminalWsUrl();
-    const ws = new WebSocket(wsUrl);
+    const url = wsUrl || getTerminalWsUrl();
+    const ws = new WebSocket(url);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -127,7 +128,7 @@ export function TerminalView({ ticket, cwd, onClose, onReady }: Props) {
       clearTimeout(timer);
       cleanup();
     };
-  }, [ticket, cwd, onClose, onReady, cleanup]);
+  }, [ticket, cwd, wsUrl, onClose, onReady, cleanup]);
 
   return (
     <div

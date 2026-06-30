@@ -4,6 +4,7 @@ const DEFAULTS = {
   key: "",
   idleTimeoutMs: 900_000,
   maxConnsPerMin: 10,
+  heartbeatInterval: 30_000,
 };
 
 export interface AgentConfig {
@@ -16,6 +17,8 @@ export interface AgentConfig {
   jwtSecret: string;
   originAllowlist: string[];
   maxConnsPerMin: number;
+  deviceName: string;
+  registryUrl: string;
 }
 
 let cached: AgentConfig | null = null;
@@ -54,6 +57,9 @@ export function config(): AgentConfig {
     10,
   ) || DEFAULTS.maxConnsPerMin;
 
+  const deviceName = process.env.AGENT_DEVICE_NAME || "";
+  const registryUrl = process.env.AGENT_REGISTRY_URL || "";
+
   cached = {
     host,
     port,
@@ -64,6 +70,8 @@ export function config(): AgentConfig {
     jwtSecret,
     originAllowlist,
     maxConnsPerMin,
+    deviceName,
+    registryUrl,
   };
   return cached;
 }

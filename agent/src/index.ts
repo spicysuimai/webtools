@@ -12,6 +12,7 @@ import {
 } from "./auth.js";
 import { createSession, type Session, touch, summary, isTimedOut } from "./session.js";
 import { spawnPty } from "./pty.js";
+import { register, unregister } from "./registry.js";
 
 interface PtyWebSocket extends WebSocket {
   __pty?: IPty;
@@ -230,3 +231,8 @@ console.log(`[agent] listening on ${cfg.host}:${cfg.port}`);
 console.log(`[agent] idle timeout: ${cfg.idleTimeoutMs / 1000}s`);
 console.log(`[agent] max conns/min: ${cfg.maxConnsPerMin}`);
 console.log(`[agent] origin allowlist: ${cfg.originAllowlist.join(", ") || "(all — dev mode)"}`);
+
+// Device registry
+register().catch((err) => console.warn("[agent] registry init failed:", err));
+process.on("SIGINT", () => { unregister(); process.exit(); });
+process.on("SIGTERM", () => { unregister(); process.exit(); });
