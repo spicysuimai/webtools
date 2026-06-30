@@ -212,6 +212,7 @@ Bugfix：
 * [x] Agent: 添加 dotenv 加载 `agent/.env`，修复 JWT_SECRET 未读取
 * [x] Agent: EADDRINUSE 友好错误提示，不抛 unhandled error
 * [x] Agent heartbeat 401: middleware 支持 Bearer token，agent 心跳带 `sub: "agent"` JWT
+* [x] Terminal 连接即断: React Strict Mode mount counter 防 WS 重复创建/销毁
 
 ## Decisions
 
