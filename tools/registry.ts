@@ -54,4 +54,13 @@ export const tools: ToolMeta[] = [
     category: "private",
     requireAuth: true,
   },
+  {
+    id: "terminal",
+    title: "远程终端",
+    description: "连接到已授权设备的真实 shell 终端。",
+    href: "/tools/terminal",
+    icon: "🖥️",
+    category: "private",
+    requireAuth: true,
+  },
 ];

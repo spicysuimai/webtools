@@ -8,7 +8,6 @@ import { config as loadEnv } from "./config.js";
 
 const AUTH_TIMEOUT_MS = 3_000;
 
-let challenge: string | null = null;
 let challengeTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function verifyKey(key: string): boolean {

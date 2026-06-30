@@ -1,28 +1,20 @@
-import { WebSocketServer, type WebSocket } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
+import type { IPty } from "node-pty";
 import { config } from "./config.js";
 import { verifyKey, startAuthTimer, clearAuthTimer } from "./auth.js";
 import { createSession, type Session, touch } from "./session.js";
 import { spawnPty } from "./pty.js";
 
+interface PtyWebSocket extends WebSocket {
+  __pty?: IPty;
+}
+
 const cfg = config();
 const wss = new WebSocketServer({ host: cfg.host, port: cfg.port });
 
-// DEV-ONLY: Stub Origin check. Logs unexpected origins but does NOT block.
-// Phase 6.4 must hard-enforce allowlist to prevent Cross-Site WebSocket Hijacking.
-function checkOrigin(ws: WebSocket, req: Request): boolean {
-  const origin = req.headers.get("origin");
-  if (!origin) return true; // non-browser clients
-  // In dev, log but allow all. Phase 6.4: enforce allowlist.
-  console.log(`[agent] WS origin: ${origin}`);
-  return true;
-}
+const sessions = new Map<string, { ws: PtyWebSocket; session: Session }>();
 
-const sessions = new Map<string, { ws: WebSocket; session: Session }>();
-
-wss.on("connection", (ws, req) => {
-  // OWASP: Check Origin header to prevent CSWSH (dev: log only, Phase 6.4 hard-enforce)
-  // checkOrigin(ws, req); // stub
-
+wss.on("connection", (ws: PtyWebSocket) => {
   console.log("[agent] connection");
 
   let authed = false;
@@ -58,12 +50,13 @@ wss.on("connection", (ws, req) => {
 
       const cwd = msg.cwd || cfg.defaultCwd;
 
-      let pty;
+      let pty: IPty;
       try {
         pty = spawnPty(cwd);
-      } catch (err: any) {
-        ws.send(JSON.stringify({ type: "auth_error", message: err.message }));
-        ws.close(4004, "spawn failed");
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "spawn failed";
+        ws.send(JSON.stringify({ type: "auth_error", message }));
+        ws.close(4004, message);
         return;
       }
 
@@ -75,40 +68,36 @@ wss.on("connection", (ws, req) => {
 
       pty.onData((data: string) => {
         touch(session!);
-        if (ws.readyState === ws.OPEN) {
+        if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "output", data }));
         }
       });
 
       pty.onExit(({ exitCode, signal }: { exitCode: number; signal?: number }) => {
         const reason = signal ? `signal ${signal}` : `exit ${exitCode}`;
-        if (ws.readyState === ws.OPEN) {
+        if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "closed", code: exitCode, reason }));
         }
         sessions.delete(session!.id);
         ws.close();
       });
 
-      // Write pty to ws response
-      (ws as any).__pty = pty;
+      ws.__pty = pty;
       return;
     }
 
     // --- Post-auth messages ---
     if (msg.type === "input" && typeof msg.data === "string") {
-      const pty = (ws as any).__pty;
-      if (pty) pty.write(msg.data);
+      ws.__pty?.write(msg.data);
       touch(session!);
     } else if (msg.type === "resize" && typeof msg.cols === "number" && typeof msg.rows === "number") {
-      const pty = (ws as any).__pty;
-      if (pty) pty.resize(msg.cols, msg.rows);
+      ws.__pty?.resize(msg.cols, msg.rows);
     }
   });
 
   ws.on("close", () => {
-    const pty = (ws as any).__pty;
-    if (pty) {
-      try { pty.kill(); } catch { /* already dead */ }
+    if (ws.__pty) {
+      try { ws.__pty.kill(); } catch { /* already dead */ }
     }
     if (session) {
       sessions.delete(session.id);
