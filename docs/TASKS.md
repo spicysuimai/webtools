@@ -74,6 +74,13 @@ Phase 5: 私有工具
 
 上线前需设置 Vercel 环境变量：JWT_SECRET、AUTH_PASSWORD_HASH
 
+### Phase 5.2: 体验完善
+
+已完成。
+
+* [x] app/dashboard/page.tsx — 添加退出登录按钮（components/logout-button.tsx Client Component，POST /api/auth/logout 后跳转 /）
+* [x] app/tools/page.tsx — 认证后显示私有工具（async Server Component，读 cookie + verifyToken，拆公共/私有两区）
+
 ### Phase 5.3: AI Chat MVP
 
 已完成。
