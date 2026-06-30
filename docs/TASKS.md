@@ -125,7 +125,20 @@ Bugfix：
 * [x] agent/src/pty.ts — node-pty spawn shell（Windows: powershell.exe, Unix: /bin/sh），cwd allowlist 校验
 * [x] agent/src/index.ts — WS server，握手鉴权 → spawn PTY → 双向 stream
 * [x] .gitignore 修正（node_modules/ 嵌套匹配 + !.env.example）
-* [ ] Phase 6.2: Web Terminal UI（xterm.js）
+### Phase 6.2: Web Terminal UI
+
+已完成。
+
+* [x] lib/ws-config.ts — WS URL 配置（NEXT_PUBLIC_TERMINAL_WS or default localhost:4200）
+* [x] components/terminal-view.tsx — xterm.js React wrapper（Tokyo Night 主题，FitAddon，WebLinksAddon，ResizeObserver）
+* [x] app/tools/terminal/layout.tsx — metadata（"远程终端"）
+* [x] app/tools/terminal/page.tsx — 连接表单（Host URL + Auth Key + cwd），认证后全屏终端
+* [x] tools/registry.ts — 注册 terminal（requireAuth: true，middleware 自动保护）
+* [x] tsconfig.json — 排除 agent/ 目录
+* [x] agent/src/index.ts — 修复 import type → 值导入，PtyWebSocket 类型
+* [x] agent/src/auth.ts — 清理未使用变量
+
+* [ ] Phase 6.3: Session Manager（多 session、tab、cwd、timeout、reconnect）
 
 ## Later (暂缓)
 
