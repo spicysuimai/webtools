@@ -37,6 +37,7 @@ export default function TerminalPage() {
   const [selectedPresetId, setSelectedPresetId] = useState<string>("");
   const [presetLabel, setPresetLabel] = useState("");
   const [presetCommand, setPresetCommand] = useState("");
+  const [exitConfirm, setExitConfirm] = useState(false);
 
   useEffect(() => {
     fetch("/api/private/devices")
@@ -63,10 +64,22 @@ export default function TerminalPage() {
         next.splice(idx, 1);
         return next;
       });
-      setActiveTabIdx((prev) => Math.max(0, prev - 1));
+      setActiveTabIdx((prev) => {
+        if (prev >= idx) {
+          return Math.max(0, prev - 1);
+        }
+        return prev;
+      });
     },
     [],
   );
+
+  const handleExitAll = () => {
+    setTabs([]);
+    setActiveTabIdx(0);
+    setShowForm(true);
+    setExitConfirm(false);
+  };
 
   const getWsUrl = (): string => {
     if (selectedDevice) {
@@ -116,7 +129,6 @@ export default function TerminalPage() {
         </p>
 
         <div className="mt-8 flex w-full flex-col gap-4">
-          {/* Device selector */}
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               目标设备
@@ -133,14 +145,8 @@ export default function TerminalPage() {
                 </option>
               ))}
             </select>
-            {devices.length === 0 && (
-              <span className="text-xs text-zinc-400">
-                未检测到已注册设备
-              </span>
-            )}
           </label>
 
-          {/* WS URL preview */}
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               WebSocket 地址
@@ -166,28 +172,35 @@ export default function TerminalPage() {
             />
           </label>
 
-          {/* Preset selector */}
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              快捷命令 (可选)
-            </span>
-            <select
-              value={selectedPresetId}
-              onChange={(e) => setSelectedPresetId(e.target.value)}
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            >
-              <option value="">无</option>
-              {presets.map((p) => (
-                <option key={p.id} value={p.id}>{p.label} — {p.command}</option>
-              ))}
-            </select>
-          </label>
+          {presets.length > 0 && (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                快捷命令 (可选)
+              </span>
+              <select
+                value={selectedPresetId}
+                onChange={(e) => setSelectedPresetId(e.target.value)}
+                className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              >
+                <option value="">无</option>
+                {presets.map((p) => (
+                  <option key={p.id} value={p.id}>{p.label} — {p.command}</option>
+                ))}
+              </select>
+            </label>
+          )}
 
-          {/* Save preset */}
-          {presetCommand && (
+          <button
+            type="button"
+            onClick={() => setPresetCommand(presetCommand || " ")}
+            className="text-xs text-zinc-400 hover:text-zinc-600 self-start"
+          >
+            + 添加快捷命令
+          </button>
+
+          {presetCommand && presetCommand !== " " && (
             <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
-              <span className="text-xs text-zinc-500">保存为快捷命令</span>
-              <div className="mt-2 flex gap-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={presetLabel}
@@ -211,15 +224,6 @@ export default function TerminalPage() {
                 </button>
               </div>
             </div>
-          )}
-          {!presetCommand && (
-            <button
-              type="button"
-              onClick={() => setPresetCommand("")}
-              className="text-xs text-zinc-400 hover:text-zinc-600"
-            >
-              + 添加快捷命令
-            </button>
           )}
 
           <button
@@ -272,6 +276,35 @@ export default function TerminalPage() {
         >
           + 新建
         </button>
+        <div className="ml-auto flex items-center gap-2">
+          {exitConfirm ? (
+            <>
+              <span className="text-xs text-zinc-400">断开所有会话？</span>
+              <button
+                type="button"
+                onClick={handleExitAll}
+                className="rounded bg-red-700 px-2 py-1 text-xs text-zinc-200 hover:bg-red-600"
+              >
+                确认
+              </button>
+              <button
+                type="button"
+                onClick={() => setExitConfirm(false)}
+                className="rounded px-2 py-1 text-xs text-zinc-500 hover:text-zinc-200"
+              >
+                取消
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => tabs.length > 0 ? setExitConfirm(true) : handleExitAll()}
+              className="rounded px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+            >
+              退出终端
+            </button>
+          )}
+        </div>
       </div>
 
       {/* New session form (inline) */}
@@ -314,25 +347,29 @@ export default function TerminalPage() {
         </div>
       )}
 
-      {/* Terminal panels */}
-      {tabs.map((tab, i) => (
-        <div
-          key={tab.id}
-          className="flex-1"
-          style={{ display: i === activeTabIdx ? "block" : "none" }}
-        >
-          <TerminalView
-            ticket={tab.ticket}
-            cwd={tab.cwd || undefined}
-            wsUrl={tab.wsUrl}
-            initCommand={tab.initCommand || undefined}
-            onClose={() => handleKill(i)}
-            onReady={handleReady(i)}
-          />
-        </div>
-      ))}
+      {/* Terminal panels — stacked with absolute positioning to preserve xterm state */}
+      <div className="relative flex-1">
+        {tabs.map((tab, i) => (
+          <div
+            key={tab.id}
+            className="absolute inset-0"
+            style={{
+              visibility: i === activeTabIdx ? "visible" : "hidden",
+              pointerEvents: i === activeTabIdx ? "auto" : "none",
+            }}
+          >
+            <TerminalView
+              ticket={tab.ticket}
+              cwd={tab.cwd || undefined}
+              wsUrl={tab.wsUrl}
+              initCommand={tab.initCommand || undefined}
+              onClose={() => handleKill(i)}
+              onReady={handleReady(i)}
+            />
+          </div>
+        ))}
+      </div>
 
-      {/* Empty state */}
       {tabs.length === 0 && (
         <div className="flex flex-1 items-center justify-center text-sm text-zinc-500">
           没有活动的会话 &mdash; 点击 &ldquo;+ 新建&rdquo; 开始
