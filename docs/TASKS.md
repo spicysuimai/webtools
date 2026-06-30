@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 6: 通用网页终端 (Web Terminal)
+Phase 6: 通用网页终端 — COMPLETE
 
 ## Phase 2: 基础功能 & 部署
 
@@ -116,7 +116,7 @@ Bugfix：
 
 ### Phase 6.1: Host Agent MVP
 
-进行中。
+已完成。
 
 * [x] agent/package.json — ws + node-pty + tsx
 * [x] agent/src/config.ts — AGENT_HOST/PORT/KEY/DEFAULT_CWD/ALLOWLIST_ROOTS env 读取
@@ -185,7 +185,16 @@ Bugfix：
 * [x] app/tools/terminal/page.tsx — publicUrl 优先，自动 wss://，CF 标记
 * [x] agent/.env.example — 文档示例
 
-* [ ] Phase 6.7: Quick Launch Presets（快捷命令入口）
+### Phase 6.7: Quick Launch Presets
+
+已完成。
+
+* [x] lib/presets.ts — localStorage CRUD (add/load/delete)
+* [x] components/terminal-view.tsx — initCommand prop，auth_ok 后写入 PTY
+* [x] app/tools/terminal/page.tsx — preset 选择器 + 保存表单
+
+**Phase 6: 通用网页终端 — COMPLETE**
+
 
 ## Later (暂缓)
 
