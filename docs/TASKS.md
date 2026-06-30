@@ -174,7 +174,18 @@ Bugfix：
 * [x] app/tools/terminal/page.tsx — 设备选择器（dropdown + online/offline 状态）
 * [x] components/terminal-view.tsx — wsUrl prop 支持多设备切换
 
-* [ ] Phase 6.6: Cloudflare Tunnel（公网穿透）
+### Phase 6.6: Cloudflare Tunnel
+
+已完成。
+
+* [x] agent/src/config.ts — AGENT_PUBLIC_URL 配置
+* [x] agent/src/registry.ts — 心跳上报 publicUrl
+* [x] lib/device-store.ts — DeviceInfo.publicUrl 字段
+* [x] app/api/private/devices/route.ts — POST 接受 publicUrl
+* [x] app/tools/terminal/page.tsx — publicUrl 优先，自动 wss://，CF 标记
+* [x] agent/.env.example — 文档示例
+
+* [ ] Phase 6.7: Quick Launch Presets（快捷命令入口）
 
 ## Later (暂缓)
 
