@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 5: 私有工具
+Phase 6: 通用网页终端 (Web Terminal)
 
 ## Phase 2: 基础功能 & 部署
 
@@ -114,6 +114,19 @@ Bugfix：
 
 上线前需设置对应 provider 的 API key 环境变量（如 DEEPSEEK_API_KEY）。无 key 的 provider 前端不展示。
 
+### Phase 6.1: Host Agent MVP
+
+进行中。
+
+* [x] agent/package.json — ws + node-pty + tsx
+* [x] agent/src/config.ts — AGENT_HOST/PORT/KEY/DEFAULT_CWD/ALLOWLIST_ROOTS env 读取
+* [x] agent/src/auth.ts — pre-shared key 验证（DEV-ONLY，标注替换为 WS ticket）
+* [x] agent/src/session.ts — session ID/cwd/pid/timing
+* [x] agent/src/pty.ts — node-pty spawn shell（Windows: powershell.exe, Unix: /bin/sh），cwd allowlist 校验
+* [x] agent/src/index.ts — WS server，握手鉴权 → spawn PTY → 双向 stream
+* [x] .gitignore 修正（node_modules/ 嵌套匹配 + !.env.example）
+* [ ] Phase 6.2: Web Terminal UI（xterm.js）
+
 ## Later (暂缓)
 
 * [x] JWT login
@@ -121,9 +134,9 @@ Bugfix：
 * [ ] Travel records
 * [ ] Food diary
 * [x] AI chat (multi-provider, non-streaming)
-* [ ] Local terminal service
+* [x] Local terminal service (Phase 6.1 Host Agent)
 * [ ] File transfer
-* [ ] Cloudflare Tunnel setup
+* [ ] Cloudflare Tunnel setup (Phase 6.6)
 
 ## Decisions
 
