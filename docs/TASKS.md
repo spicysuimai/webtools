@@ -138,7 +138,17 @@ Bugfix：
 * [x] agent/src/index.ts — 修复 import type → 值导入，PtyWebSocket 类型
 * [x] agent/src/auth.ts — 清理未使用变量
 
-* [ ] Phase 6.3: Session Manager（多 session、tab、cwd、timeout、reconnect）
+### Phase 6.3: Session Manager
+
+已完成。
+
+* [x] agent/src/session.ts — DEFAULT_IDLE_TIMEOUT_MS, isTimedOut(), summary(), label field
+* [x] agent/src/config.ts — AGENT_IDLE_TIMEOUT_MS env 读取
+* [x] agent/src/index.ts — idle sweep (60s 间隔), list/kill_session 消息, __sessionId
+* [x] app/tools/terminal/page.tsx — 多 tab 栏，新建表单，关闭 tab → kill PTY
+* [x] components/terminal-view.tsx — onReady(label) 回调设置 tab 名称
+
+* [ ] Phase 6.4: Auth Upgrade（WS ticket + Origin allowlist + 限流 + audit）
 
 ## Later (暂缓)
 
