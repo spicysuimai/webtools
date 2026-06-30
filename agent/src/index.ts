@@ -1,3 +1,10 @@
+import dotenv from "dotenv";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: resolve(__dirname, "..", ".env") });
+
 import { WebSocketServer, WebSocket } from "ws";
 import type { IPty } from "node-pty";
 import type { IncomingMessage } from "node:http";
@@ -20,7 +27,30 @@ interface PtyWebSocket extends WebSocket {
 }
 
 const cfg = config();
-const wss = new WebSocketServer({ host: cfg.host, port: cfg.port });
+
+let wss: WebSocketServer;
+try {
+  wss = new WebSocketServer({ host: cfg.host, port: cfg.port });
+} catch (err: unknown) {
+  const code = (err as NodeJS.ErrnoException).code;
+  if (code === "EADDRINUSE") {
+    console.error(
+      `Port ${cfg.port} is already in use. Stop the existing agent or change AGENT_PORT.`,
+    );
+    process.exit(1);
+  }
+  throw err;
+}
+
+wss.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(
+      `Port ${cfg.port} is already in use. Stop the existing agent or change AGENT_PORT.`,
+    );
+    process.exit(1);
+  }
+  console.error("[agent] server error:", err.message);
+});
 
 const sessions = new Map<string, { ws: PtyWebSocket; session: Session }>();
 
