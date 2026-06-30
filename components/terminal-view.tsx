@@ -11,11 +11,12 @@ interface Props {
   ticket: string;
   cwd?: string;
   wsUrl?: string;
+  initCommand?: string;
   onClose?: () => void;
   onReady?: (label: string) => void;
 }
 
-export function TerminalView({ ticket, cwd, wsUrl, onClose, onReady }: Props) {
+export function TerminalView({ ticket, cwd, wsUrl, initCommand, onClose, onReady }: Props) {
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -83,6 +84,9 @@ export function TerminalView({ ticket, cwd, wsUrl, onClose, onReady }: Props) {
       const msg = JSON.parse(e.data);
       if (msg.type === "auth_ok") {
         onReady?.(msg.label || "");
+        if (initCommand && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "input", data: initCommand + "\n" }));
+        }
       } else if (msg.type === "auth_error") {
         term.writeln(`\r\n\x1b[31mAuth error: ${msg.message}\x1b[0m`);
         ws.close();
@@ -128,7 +132,7 @@ export function TerminalView({ ticket, cwd, wsUrl, onClose, onReady }: Props) {
       clearTimeout(timer);
       cleanup();
     };
-  }, [ticket, cwd, wsUrl, onClose, onReady, cleanup]);
+  }, [ticket, cwd, wsUrl, initCommand, onClose, onReady, cleanup]);
 
   return (
     <div

@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { TerminalView } from "@/components/terminal-view";
 import { getTerminalWsUrl } from "@/lib/ws-config";
+import { loadPresets, addPreset, type Preset } from "@/lib/presets";
 
 interface Device {
   name: string;
@@ -19,6 +20,7 @@ interface SessionTab {
   cwd: string;
   ticket: string;
   wsUrl: string;
+  initCommand: string;
 }
 
 export default function TerminalPage() {
@@ -29,6 +31,12 @@ export default function TerminalPage() {
   const [loading, setLoading] = useState(false);
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevice, setSelectedDevice] = useState<string>("");
+  const [presets, setPresets] = useState<Preset[]>(
+    () => typeof window !== "undefined" ? loadPresets() : [],
+  );
+  const [selectedPresetId, setSelectedPresetId] = useState<string>("");
+  const [presetLabel, setPresetLabel] = useState("");
+  const [presetCommand, setPresetCommand] = useState("");
 
   useEffect(() => {
     fetch("/api/private/devices")
@@ -78,12 +86,16 @@ export default function TerminalPage() {
       const data = await res.json();
       if (!data.ticket) throw new Error("no ticket");
 
+      const preset = presets.find((p) => p.id === selectedPresetId);
+      const initCommand = preset?.command || "";
+
       const newTab: SessionTab = {
         id: `tab-${Date.now()}`,
-        label: cwd ? cwd.split(/[/\\]/).pop() || "shell" : "shell",
+        label: preset?.label || (cwd ? cwd.split(/[/\\]/).pop() || "shell" : "shell"),
         cwd: cwd || "",
         ticket: data.ticket,
         wsUrl: getWsUrl(),
+        initCommand,
       };
       setTabs((prev) => [...prev, newTab]);
       setActiveTabIdx(tabs.length);
@@ -153,6 +165,62 @@ export default function TerminalPage() {
               className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             />
           </label>
+
+          {/* Preset selector */}
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              快捷命令 (可选)
+            </span>
+            <select
+              value={selectedPresetId}
+              onChange={(e) => setSelectedPresetId(e.target.value)}
+              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              <option value="">无</option>
+              {presets.map((p) => (
+                <option key={p.id} value={p.id}>{p.label} — {p.command}</option>
+              ))}
+            </select>
+          </label>
+
+          {/* Save preset */}
+          {presetCommand && (
+            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
+              <span className="text-xs text-zinc-500">保存为快捷命令</span>
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  value={presetLabel}
+                  onChange={(e) => setPresetLabel(e.target.value)}
+                  placeholder="名称"
+                  className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (presetLabel.trim() && presetCommand.trim()) {
+                      addPreset(presetLabel.trim(), presetCommand.trim());
+                      setPresets(loadPresets());
+                      setPresetLabel("");
+                      setPresetCommand("");
+                    }
+                  }}
+                  className="rounded bg-zinc-700 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-600"
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          )}
+          {!presetCommand && (
+            <button
+              type="button"
+              onClick={() => setPresetCommand("")}
+              className="text-xs text-zinc-400 hover:text-zinc-600"
+            >
+              + 添加快捷命令
+            </button>
+          )}
 
           <button
             type="button"
@@ -257,6 +325,7 @@ export default function TerminalPage() {
             ticket={tab.ticket}
             cwd={tab.cwd || undefined}
             wsUrl={tab.wsUrl}
+            initCommand={tab.initCommand || undefined}
             onClose={() => handleKill(i)}
             onReady={handleReady(i)}
           />
