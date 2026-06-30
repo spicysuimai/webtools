@@ -2,6 +2,8 @@ const DEFAULTS = {
   host: "127.0.0.1",
   port: 4200,
   key: "",
+  idleTimeoutMs: 900_000,
+  maxConnsPerMin: 10,
 };
 
 export interface AgentConfig {
@@ -11,6 +13,9 @@ export interface AgentConfig {
   defaultCwd: string;
   allowlistRoots: string[];
   idleTimeoutMs: number;
+  jwtSecret: string;
+  originAllowlist: string[];
+  maxConnsPerMin: number;
 }
 
 let cached: AgentConfig | null = null;
@@ -22,8 +27,8 @@ export function config(): AgentConfig {
   const port = parseInt(process.env.AGENT_PORT || String(DEFAULTS.port), 10);
   const agentKey = process.env.AGENT_KEY || DEFAULTS.key;
 
-  if (!agentKey) {
-    console.warn("[agent] AGENT_KEY not set — running without auth (DEV ONLY)");
+  if (!agentKey && !process.env.JWT_SECRET) {
+    console.warn("[agent] AGENT_KEY and JWT_SECRET both unset — running without auth (DEV ONLY)");
   }
 
   const defaultCwd = process.env.AGENT_DEFAULT_CWD || process.cwd();
@@ -35,8 +40,30 @@ export function config(): AgentConfig {
   const idleTimeoutMs = parseInt(
     process.env.AGENT_IDLE_TIMEOUT_MS || "",
     10,
-  ) || 900_000; // 15 min default
+  ) || DEFAULTS.idleTimeoutMs;
 
-  cached = { host, port, agentKey, defaultCwd, allowlistRoots, idleTimeoutMs };
+  const jwtSecret = process.env.JWT_SECRET || agentKey;
+
+  const originsRaw = process.env.AGENT_ORIGIN_ALLOWLIST;
+  const originAllowlist = originsRaw
+    ? originsRaw.split(",").map((o) => o.trim()).filter(Boolean)
+    : [];
+
+  const maxConnsPerMin = parseInt(
+    process.env.AGENT_MAX_CONNS_PER_MIN || "",
+    10,
+  ) || DEFAULTS.maxConnsPerMin;
+
+  cached = {
+    host,
+    port,
+    agentKey,
+    defaultCwd,
+    allowlistRoots,
+    idleTimeoutMs,
+    jwtSecret,
+    originAllowlist,
+    maxConnsPerMin,
+  };
   return cached;
 }

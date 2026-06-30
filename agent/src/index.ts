@@ -1,7 +1,15 @@
 import { WebSocketServer, WebSocket } from "ws";
 import type { IPty } from "node-pty";
+import type { IncomingMessage } from "node:http";
 import { config } from "./config.js";
-import { verifyKey, startAuthTimer, clearAuthTimer } from "./auth.js";
+import {
+  verifyTicket,
+  verifyKey,
+  startAuthTimer,
+  clearAuthTimer,
+  checkRateLimit,
+  checkOrigin,
+} from "./auth.js";
 import { createSession, type Session, touch, summary, isTimedOut } from "./session.js";
 import { spawnPty } from "./pty.js";
 
@@ -15,11 +23,18 @@ const wss = new WebSocketServer({ host: cfg.host, port: cfg.port });
 
 const sessions = new Map<string, { ws: PtyWebSocket; session: Session }>();
 
+// --- Audit ---
+function audit(event: string, detail: string) {
+  const ts = new Date().toISOString();
+  console.log(`[audit] ${ts} ${event} ${detail}`);
+}
+// ---
+
 // --- Idle timeout sweep ---
 const sweepInterval = setInterval(() => {
   for (const [id, entry] of sessions) {
     if (isTimedOut(entry.session, cfg.idleTimeoutMs)) {
-      console.log(`[agent] idle timeout session=${id}`);
+      audit("session_timeout", `id=${id} cwd=${entry.session.cwd}`);
       if (entry.ws.__pty) {
         try { entry.ws.__pty.kill(); } catch { /* ignore */ }
       }
@@ -32,18 +47,54 @@ const sweepInterval = setInterval(() => {
   }
 }, 60_000);
 wss.on("close", () => clearInterval(sweepInterval));
+
+// --- Rate limit check on upgrade ---
+wss.on("headers", (_headers: string[], req: IncomingMessage) => {
+  // Phase 6.4: Origin enforcement
+  const origin = req.headers.origin || null;
+  if (!checkOrigin(origin)) {
+    audit("origin_blocked", `origin=${origin} ip=${req.socket.remoteAddress}`);
+    // Can't easily reject at this stage; done in connection handler
+  }
+});
 // ---
 
-wss.on("connection", (ws: PtyWebSocket) => {
-  console.log("[agent] connection");
+wss.on("connection", (ws: PtyWebSocket, req: IncomingMessage) => {
+  const clientIp = req.socket.remoteAddress || "unknown";
+  const origin = req.headers.origin || "unknown";
+
+  // Rate limit
+  if (!checkRateLimit(cfg.maxConnsPerMin)) {
+    audit("rate_limited", `ip=${clientIp}`);
+    ws.close(4029, "rate limited");
+    return;
+  }
+
+  // Phase 6.4: Hard Origin enforcement
+  if (!checkOrigin(req.headers.origin || null)) {
+    audit("origin_blocked", `origin=${origin} ip=${clientIp}`);
+    ws.close(4030, "origin not allowed");
+    return;
+  }
+
+  console.log(`[agent] connection ip=${clientIp}`);
 
   let authed = false;
   let session: Session | null = null;
 
   startAuthTimer(ws);
 
-  ws.on("message", (raw) => {
-    let msg: { type: string; key?: string; cwd?: string; data?: string; cols?: number; rows?: number; sessionId?: string };
+  ws.on("message", async (raw) => {
+    let msg: {
+      type: string;
+      key?: string;
+      ticket?: string;
+      cwd?: string;
+      data?: string;
+      cols?: number;
+      rows?: number;
+      sessionId?: string;
+    };
     try {
       msg = JSON.parse(raw.toString());
     } catch {
@@ -51,10 +102,9 @@ wss.on("connection", (ws: PtyWebSocket) => {
       return;
     }
 
-    // --- Pre-auth: only accept "auth" and "list" (for status check) ---
+    // --- Pre-auth: accept "auth", "list" ---
     if (!authed) {
       if (msg.type === "list") {
-        // Allow listing sessions pre-auth (for session picker)
         const all: { id: string; label: string; cwd: string; idleSeconds: number }[] = [];
         for (const [, entry] of sessions) {
           const s = summary(entry.session);
@@ -69,9 +119,17 @@ wss.on("connection", (ws: PtyWebSocket) => {
         return;
       }
 
-      const valid = msg.key ? verifyKey(msg.key) : false;
+      // Phase 6.4: prefer ticket, fallback to key for dev
+      let valid = false;
+      if (msg.ticket) {
+        valid = await verifyTicket(msg.ticket);
+      } else if (msg.key) {
+        valid = verifyKey(msg.key);
+      }
+
       if (!valid) {
-        ws.send(JSON.stringify({ type: "auth_error", message: "invalid key" }));
+        audit("auth_fail", `ip=${clientIp}`);
+        ws.send(JSON.stringify({ type: "auth_error", message: "invalid credentials" }));
         ws.close(4003, "unauthorized");
         return;
       }
@@ -96,6 +154,8 @@ wss.on("connection", (ws: PtyWebSocket) => {
       ws.__sessionId = session.id;
       sessions.set(session.id, { ws, session });
 
+      audit("session_start", `id=${session.id} cwd=${cwd} ip=${clientIp}`);
+
       ws.send(JSON.stringify({ type: "auth_ok", sessionId: session.id, label: session.label }));
 
       pty.onData((data: string) => {
@@ -110,6 +170,7 @@ wss.on("connection", (ws: PtyWebSocket) => {
         if (ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "closed", code: exitCode, reason }));
         }
+        audit("session_end", `id=${session!.id} reason=${reason}`);
         sessions.delete(session!.id);
         ws.close();
       });
@@ -141,6 +202,7 @@ wss.on("connection", (ws: PtyWebSocket) => {
           entry.ws.send(JSON.stringify({ type: "closed", code: 0, reason: "killed" }));
           entry.ws.close();
         }
+        audit("session_kill", `id=${msg.sessionId}`);
         sessions.delete(msg.sessionId);
       }
       ws.send(JSON.stringify({ type: "ok" }));
@@ -152,6 +214,7 @@ wss.on("connection", (ws: PtyWebSocket) => {
       try { ws.__pty.kill(); } catch { /* already dead */ }
     }
     if (session) {
+      audit("session_disconnect", `id=${session.id}`);
       sessions.delete(session.id);
     }
     clearAuthTimer();
@@ -165,3 +228,5 @@ wss.on("connection", (ws: PtyWebSocket) => {
 
 console.log(`[agent] listening on ${cfg.host}:${cfg.port}`);
 console.log(`[agent] idle timeout: ${cfg.idleTimeoutMs / 1000}s`);
+console.log(`[agent] max conns/min: ${cfg.maxConnsPerMin}`);
+console.log(`[agent] origin allowlist: ${cfg.originAllowlist.join(", ") || "(all — dev mode)"}`);

@@ -16,6 +16,14 @@ export async function signToken(): Promise<string> {
     .sign(getSecret());
 }
 
+export async function signTerminalTicket(): Promise<string> {
+  return new SignJWT({ sub: "terminal" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("60s")
+    .sign(getSecret());
+}
+
 export async function verifyToken(
   token: string,
 ): Promise<{ sub: string } | null> {

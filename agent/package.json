@@ -8,6 +8,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "jose": "^6.2.3",
     "node-pty": "^1.0.0",
     "ws": "^8.18.0"
   },

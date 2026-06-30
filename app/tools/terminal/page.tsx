@@ -8,14 +8,15 @@ interface SessionTab {
   id: string;
   label: string;
   cwd: string;
+  ticket: string;
 }
 
 export default function TerminalPage() {
-  const [authKey, setAuthKey] = useState("");
   const [cwd, setCwd] = useState("");
   const [tabs, setTabs] = useState<SessionTab[]>([]);
   const [activeTabIdx, setActiveTabIdx] = useState(0);
   const [showForm, setShowForm] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   const handleReady = useCallback(
     (idx: number) => (label: string) => {
@@ -40,16 +41,27 @@ export default function TerminalPage() {
     [],
   );
 
-  const addTab = () => {
-    if (!authKey.trim()) return;
-    const newTab: SessionTab = {
-      id: `tab-${Date.now()}`,
-      label: cwd ? cwd.split(/[/\\]/).pop() || "shell" : "shell",
-      cwd: cwd || "",
-    };
-    setTabs((prev) => [...prev, newTab]);
-    setActiveTabIdx(tabs.length);
-    setShowForm(false);
+  const addTab = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/private/terminal-ticket", { method: "POST" });
+      const data = await res.json();
+      if (!data.ticket) throw new Error("no ticket");
+
+      const newTab: SessionTab = {
+        id: `tab-${Date.now()}`,
+        label: cwd ? cwd.split(/[/\\]/).pop() || "shell" : "shell",
+        cwd: cwd || "",
+        ticket: data.ticket,
+      };
+      setTabs((prev) => [...prev, newTab]);
+      setActiveTabIdx(tabs.length);
+      setShowForm(false);
+    } catch {
+      alert("获取终端票据失败，请确认已登录。");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (tabs.length === 0 && showForm) {
@@ -75,19 +87,6 @@ export default function TerminalPage() {
 
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Auth Key
-            </span>
-            <input
-              type="password"
-              value={authKey}
-              onChange={(e) => setAuthKey(e.target.value)}
-              placeholder="输入 AGENT_KEY"
-              className="rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               工作目录 (可选)
             </span>
             <input
@@ -100,11 +99,12 @@ export default function TerminalPage() {
           </label>
 
           <button
+            type="button"
             onClick={addTab}
-            disabled={!authKey.trim()}
+            disabled={loading}
             className="mt-2 rounded-md bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            连接
+            {loading ? "获取票据..." : "连接"}
           </button>
         </div>
       </main>
@@ -154,13 +154,6 @@ export default function TerminalPage() {
       {showForm && (
         <div className="flex flex-wrap items-center gap-2 border-b border-zinc-700 px-2 py-2">
           <input
-            type="password"
-            value={authKey}
-            onChange={(e) => setAuthKey(e.target.value)}
-            placeholder="Auth Key"
-            className="rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-xs text-zinc-200"
-          />
-          <input
             type="text"
             value={cwd}
             onChange={(e) => setCwd(e.target.value)}
@@ -170,10 +163,10 @@ export default function TerminalPage() {
           <button
             type="button"
             onClick={addTab}
-            disabled={!authKey.trim()}
+            disabled={loading}
             className="rounded bg-zinc-700 px-3 py-1 text-xs text-zinc-200 hover:bg-zinc-600 disabled:opacity-40"
           >
-            连接
+            {loading ? "..." : "连接"}
           </button>
           <button
             type="button"
@@ -193,7 +186,7 @@ export default function TerminalPage() {
           style={{ display: i === activeTabIdx ? "block" : "none" }}
         >
           <TerminalView
-            authKey={authKey}
+            ticket={tab.ticket}
             cwd={tab.cwd || undefined}
             onClose={() => handleKill(i)}
             onReady={handleReady(i)}

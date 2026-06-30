@@ -8,13 +8,13 @@ import "@xterm/xterm/css/xterm.css";
 import { getTerminalWsUrl } from "@/lib/ws-config";
 
 interface Props {
-  authKey: string;
+  ticket: string;
   cwd?: string;
   onClose?: () => void;
   onReady?: (label: string) => void;
 }
 
-export function TerminalView({ authKey, cwd, onClose, onReady }: Props) {
+export function TerminalView({ ticket, cwd, onClose, onReady }: Props) {
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,7 +75,7 @@ export function TerminalView({ authKey, cwd, onClose, onReady }: Props) {
     wsRef.current = ws;
 
     ws.onopen = () => {
-      ws.send(JSON.stringify({ type: "auth", key: authKey, cwd: cwd || "" }));
+      ws.send(JSON.stringify({ type: "auth", ticket, cwd: cwd || "" }));
     };
 
     ws.onmessage = (e) => {
@@ -127,7 +127,7 @@ export function TerminalView({ authKey, cwd, onClose, onReady }: Props) {
       clearTimeout(timer);
       cleanup();
     };
-  }, [authKey, cwd, onClose, onReady, cleanup]);
+  }, [ticket, cwd, onClose, onReady, cleanup]);
 
   return (
     <div
