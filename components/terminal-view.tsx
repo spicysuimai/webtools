@@ -11,9 +11,10 @@ interface Props {
   authKey: string;
   cwd?: string;
   onClose?: () => void;
+  onReady?: (label: string) => void;
 }
 
-export function TerminalView({ authKey, cwd, onClose }: Props) {
+export function TerminalView({ authKey, cwd, onClose, onReady }: Props) {
   const termRef = useRef<Terminal | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +70,6 @@ export function TerminalView({ authKey, cwd, onClose }: Props) {
     term.open(containerRef.current!);
     fitAddon.fit();
 
-    // Connect
     const wsUrl = getTerminalWsUrl();
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
@@ -81,7 +81,7 @@ export function TerminalView({ authKey, cwd, onClose }: Props) {
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data);
       if (msg.type === "auth_ok") {
-        // Ready — terminal can now accept input
+        onReady?.(msg.label || "");
       } else if (msg.type === "auth_error") {
         term.writeln(`\r\n\x1b[31mAuth error: ${msg.message}\x1b[0m`);
         ws.close();
@@ -107,22 +107,14 @@ export function TerminalView({ authKey, cwd, onClose }: Props) {
       }
     });
 
-    // Resize handler
     const handleResize = () => {
       if (!fitRef.current) return;
       fitRef.current.fit();
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send(
-          JSON.stringify({
-            type: "resize",
-            cols: term.cols,
-            rows: term.rows,
-          }),
-        );
+        ws.send(JSON.stringify({ type: "resize", cols: term.cols, rows: term.rows }));
       }
     };
 
-    // Debounced resize observer
     let timer: ReturnType<typeof setTimeout>;
     const observer = new ResizeObserver(() => {
       clearTimeout(timer);
@@ -135,13 +127,13 @@ export function TerminalView({ authKey, cwd, onClose }: Props) {
       clearTimeout(timer);
       cleanup();
     };
-  }, [authKey, cwd, onClose, cleanup]);
+  }, [authKey, cwd, onClose, onReady, cleanup]);
 
   return (
     <div
       ref={containerRef}
-      className="h-full w-full rounded-lg border border-zinc-700"
-      style={{ minHeight: 400 }}
+      className="h-full w-full rounded-b-lg border-x border-b border-zinc-700"
+      style={{ minHeight: 300 }}
     />
   );
 }

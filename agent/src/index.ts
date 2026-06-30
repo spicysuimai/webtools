@@ -2,17 +2,37 @@ import { WebSocketServer, WebSocket } from "ws";
 import type { IPty } from "node-pty";
 import { config } from "./config.js";
 import { verifyKey, startAuthTimer, clearAuthTimer } from "./auth.js";
-import { createSession, type Session, touch } from "./session.js";
+import { createSession, type Session, touch, summary, isTimedOut } from "./session.js";
 import { spawnPty } from "./pty.js";
 
 interface PtyWebSocket extends WebSocket {
   __pty?: IPty;
+  __sessionId?: string;
 }
 
 const cfg = config();
 const wss = new WebSocketServer({ host: cfg.host, port: cfg.port });
 
 const sessions = new Map<string, { ws: PtyWebSocket; session: Session }>();
+
+// --- Idle timeout sweep ---
+const sweepInterval = setInterval(() => {
+  for (const [id, entry] of sessions) {
+    if (isTimedOut(entry.session, cfg.idleTimeoutMs)) {
+      console.log(`[agent] idle timeout session=${id}`);
+      if (entry.ws.__pty) {
+        try { entry.ws.__pty.kill(); } catch { /* ignore */ }
+      }
+      if (entry.ws.readyState === WebSocket.OPEN) {
+        entry.ws.send(JSON.stringify({ type: "closed", code: -1, reason: "idle timeout" }));
+        entry.ws.close();
+      }
+      sessions.delete(id);
+    }
+  }
+}, 60_000);
+wss.on("close", () => clearInterval(sweepInterval));
+// ---
 
 wss.on("connection", (ws: PtyWebSocket) => {
   console.log("[agent] connection");
@@ -23,7 +43,7 @@ wss.on("connection", (ws: PtyWebSocket) => {
   startAuthTimer(ws);
 
   ws.on("message", (raw) => {
-    let msg: { type: string; key?: string; cwd?: string; data?: string; cols?: number; rows?: number };
+    let msg: { type: string; key?: string; cwd?: string; data?: string; cols?: number; rows?: number; sessionId?: string };
     try {
       msg = JSON.parse(raw.toString());
     } catch {
@@ -31,8 +51,19 @@ wss.on("connection", (ws: PtyWebSocket) => {
       return;
     }
 
-    // --- Pre-auth: only accept "auth" message ---
+    // --- Pre-auth: only accept "auth" and "list" (for status check) ---
     if (!authed) {
+      if (msg.type === "list") {
+        // Allow listing sessions pre-auth (for session picker)
+        const all: { id: string; label: string; cwd: string; idleSeconds: number }[] = [];
+        for (const [, entry] of sessions) {
+          const s = summary(entry.session);
+          all.push({ id: s.id, label: s.label, cwd: s.cwd, idleSeconds: s.idleSeconds });
+        }
+        ws.send(JSON.stringify({ type: "list", sessions: all }));
+        return;
+      }
+
       if (msg.type !== "auth") {
         ws.close(4002, "auth required first");
         return;
@@ -62,9 +93,10 @@ wss.on("connection", (ws: PtyWebSocket) => {
 
       session = createSession(cwd);
       session.pid = pty.pid;
+      ws.__sessionId = session.id;
       sessions.set(session.id, { ws, session });
 
-      ws.send(JSON.stringify({ type: "auth_ok", sessionId: session.id }));
+      ws.send(JSON.stringify({ type: "auth_ok", sessionId: session.id, label: session.label }));
 
       pty.onData((data: string) => {
         touch(session!);
@@ -92,6 +124,26 @@ wss.on("connection", (ws: PtyWebSocket) => {
       touch(session!);
     } else if (msg.type === "resize" && typeof msg.cols === "number" && typeof msg.rows === "number") {
       ws.__pty?.resize(msg.cols, msg.rows);
+    } else if (msg.type === "list") {
+      const all: { id: string; label: string; cwd: string; idleSeconds: number }[] = [];
+      for (const [, entry] of sessions) {
+        const s = summary(entry.session);
+        all.push({ id: s.id, label: s.label, cwd: s.cwd, idleSeconds: s.idleSeconds });
+      }
+      ws.send(JSON.stringify({ type: "list", sessions: all }));
+    } else if (msg.type === "kill_session" && typeof msg.sessionId === "string") {
+      const entry = sessions.get(msg.sessionId);
+      if (entry) {
+        if (entry.ws.__pty) {
+          try { entry.ws.__pty.kill(); } catch { /* ignore */ }
+        }
+        if (entry.ws.readyState === WebSocket.OPEN) {
+          entry.ws.send(JSON.stringify({ type: "closed", code: 0, reason: "killed" }));
+          entry.ws.close();
+        }
+        sessions.delete(msg.sessionId);
+      }
+      ws.send(JSON.stringify({ type: "ok" }));
     }
   });
 
@@ -112,3 +164,4 @@ wss.on("connection", (ws: PtyWebSocket) => {
 });
 
 console.log(`[agent] listening on ${cfg.host}:${cfg.port}`);
+console.log(`[agent] idle timeout: ${cfg.idleTimeoutMs / 1000}s`);

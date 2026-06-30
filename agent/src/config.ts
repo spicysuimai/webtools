@@ -10,6 +10,7 @@ export interface AgentConfig {
   agentKey: string;
   defaultCwd: string;
   allowlistRoots: string[];
+  idleTimeoutMs: number;
 }
 
 let cached: AgentConfig | null = null;
@@ -31,6 +32,11 @@ export function config(): AgentConfig {
     ? rootsRaw.split(",").map((r) => r.trim()).filter(Boolean)
     : [];
 
-  cached = { host, port, agentKey, defaultCwd, allowlistRoots };
+  const idleTimeoutMs = parseInt(
+    process.env.AGENT_IDLE_TIMEOUT_MS || "",
+    10,
+  ) || 900_000; // 15 min default
+
+  cached = { host, port, agentKey, defaultCwd, allowlistRoots, idleTimeoutMs };
   return cached;
 }
