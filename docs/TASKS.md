@@ -162,7 +162,19 @@ Bugfix：
 * [x] components/terminal-view.tsx — ticket prop 替代 authKey
 * [x] agent/.env.example — 文档更新
 
-* [ ] Phase 6.5: Device Registry（多设备注册、在线状态、切换）
+### Phase 6.5: Device Registry
+
+已完成。
+
+* [x] agent/src/registry.ts — 启动注册 + 30s 心跳到 AGENT_REGISTRY_URL
+* [x] agent/src/config.ts — AGENT_DEVICE_NAME, AGENT_REGISTRY_URL
+* [x] lib/device-store.ts — 共享内存设备表，listDevices/registerDevice/removeDevice
+* [x] app/api/private/devices/route.ts — GET 设备列表（含 online 状态，90s 超时）、POST 注册
+* [x] app/api/private/devices/[name]/route.ts — DELETE 移除设备
+* [x] app/tools/terminal/page.tsx — 设备选择器（dropdown + online/offline 状态）
+* [x] components/terminal-view.tsx — wsUrl prop 支持多设备切换
+
+* [ ] Phase 6.6: Cloudflare Tunnel（公网穿透）
 
 ## Later (暂缓)
 
