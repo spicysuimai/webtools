@@ -1,4 +1,5 @@
 import { SignJWT } from "jose";
+import os from "node:os";
 import { config } from "./config.js";
 
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -65,12 +66,14 @@ export function unregister(): void {
 }
 
 function getLocalIP(): string {
-  // Fallback for 0.0.0.0 — the registry can't connect to 0.0.0.0,
-  // so we resolve the machine's LAN IP. Crude: return hostname.
-  try {
-    const { hostname } = new URL(`http://localhost`);
-    return hostname; // "localhost", but will be overwritten by registry logic
-  } catch {
-    return "127.0.0.1";
+  const interfaces = os.networkInterfaces();
+  for (const [, addrs] of Object.entries(interfaces)) {
+    if (!addrs) continue;
+    for (const addr of addrs) {
+      if (addr.family === "IPv4" && !addr.internal) {
+        return addr.address;
+      }
+    }
   }
+  return "127.0.0.1";
 }
