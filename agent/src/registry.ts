@@ -13,7 +13,7 @@ async function signAgentToken(): Promise<string> {
   return new SignJWT({ sub: "agent" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime("30s")
+    .setExpirationTime("60s")
     .sign(getSecret());
 }
 

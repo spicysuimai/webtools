@@ -98,19 +98,21 @@ export function TerminalView({ ticket, cwd, wsUrl, initCommand, onClose, onReady
           }
         } else if (msg.type === "auth_error") {
           setStatus("error");
-          term.writeln(`\r\n\x1b[31m${msg.message}\x1b[0m`);
+          if (!disposed) term.writeln(`\r\n\x1b[31m${msg.message}\x1b[0m`);
         } else if (msg.type === "output") {
-          term.write(msg.data);
+          if (!disposed) term.write(msg.data);
         } else if (msg.type === "closed") {
           setStatus("error");
-          term.writeln(`\r\n\x1b[33m[${msg.reason}]\x1b[0m`);
+          if (!disposed) term.writeln(`\r\n\x1b[33m[${msg.reason}]\x1b[0m`);
           onCloseRef.current?.();
         }
       };
 
       ws.onerror = () => {
         setStatus("error");
-        term.writeln("\r\n\x1b[31m[Connection error]\x1b[0m");
+        if (!disposed) {
+          term.writeln("\r\n\x1b[31m[Connection error]\x1b[0m");
+        }
       };
 
       ws.onclose = () => {
