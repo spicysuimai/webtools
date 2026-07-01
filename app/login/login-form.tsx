@@ -1,12 +1,9 @@
 "use client";
 
-"use client";
-
 import { useState, useRef, FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
 
-export function LoginForm() {
-  const from = useSearchParams().get("from") ?? "/dashboard";
+export function LoginForm({ from }: { from?: string }) {
+  const redirectTo = from ?? "/dashboard";
   const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +24,7 @@ export function LoginForm() {
         setError(data.error ?? "登录失败");
         return;
       }
-      window.location.href = from;
+      window.location.href = redirectTo;
     } catch {
       setError("网络错误，请重试");
     } finally {
