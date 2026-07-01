@@ -215,6 +215,8 @@ Bugfix：
 * [x] Terminal 连接即断: React Strict Mode mount counter 防 WS 重复创建/销毁
 * [x] Tab 切换清空输出: display:none → visibility:hidden + absolute 定位保留 xterm 状态
 * [x] 退出终端按钮: 确认弹窗 → 关闭所有 session → 返回连接表单
+* [x] 终端组件防竞态: WS 回调添加 disposed 守卫，防 tab 关闭后写已销毁 xterm
+* [x] Agent 心跳 JWT TTL: 30s → 60s，防网络延迟导致 token 过期
 
 ## Decisions
 
