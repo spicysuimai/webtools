@@ -1,16 +1,19 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+"use client";
+
+import { useState, useRef, FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 
 export function LoginForm() {
   const from = useSearchParams().get("from") ?? "/dashboard";
-  const [password, setPassword] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const password = inputRef.current?.value || "";
     setError("");
     setLoading(true);
     try {
@@ -35,9 +38,8 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
       <input
+        ref={inputRef}
         type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
         placeholder="请输入密码"
         autoFocus
         className="rounded-lg border border-zinc-300 px-4 py-2 text-sm focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:focus:border-zinc-100"
@@ -47,7 +49,7 @@ export function LoginForm() {
       )}
       <button
         type="submit"
-        disabled={loading || !password}
+        disabled={loading}
         className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
         {loading ? "登录中..." : "登录"}
