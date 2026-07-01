@@ -48,12 +48,12 @@ export async function verifyPassword(password: string): Promise<boolean> {
   return hashHex === storedHash;
 }
 
-export function getAuthCookieValue(token: string): string {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+export function getAuthCookieValue(token: string, isHttps?: boolean): string {
+  const secure = isHttps ? "; Secure" : "";
   return `${COOKIE_NAME}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=604800${secure}`;
 }
 
-export function getClearCookieValue(): string {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+export function getClearCookieValue(isHttps?: boolean): string {
+  const secure = isHttps ? "; Secure" : "";
   return `${COOKIE_NAME}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${secure}`;
 }

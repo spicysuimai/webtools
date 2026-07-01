@@ -20,7 +20,8 @@ export async function POST(request: Request) {
   }
 
   const token = await signToken();
+  const isHttps = request.url.startsWith("https://");
   const response = NextResponse.json({ ok: true });
-  response.headers.set("Set-Cookie", getAuthCookieValue(token));
+  response.headers.set("Set-Cookie", getAuthCookieValue(token, isHttps));
   return response;
 }
